@@ -70,6 +70,41 @@ BEGIN
 END; $$
 Language PLPGSQL;
 
+CREATE OR REPLACE FUNCTION CALC_DISTANCIAS (kn integer)
+RETURNS TABLE 
+(
+	dis_point_c1 REAL,
+	dis_point_c2 REAL, 
+	dis_point_c3 REAL
+) as $$
+DECLARE
+	REG RECORD;
+	DIS RECORD;
+BEGIN
+--	SELECT INTO REG * FROM CREATE_CENTROID(3);
+--	INSERT INTO DIS VALUES SQRT((POWER((REG.sepal_length - IRIS_NORMALIZADO.sepal_length),2) + 
+--					POWER((REG.sepal_width - IRIS_NORMALIZADO.sepal_width),2) +
+--					POWER((REG.petal_length - IRIS_NORMALIZADO.petal_length),2) +
+--					POWER((REG.petal_width - IRIS_NORMALIZADO.petal_width),2)));
+	FOR REG IN(SELECT 
+ 		sepal_length,
+    	sepal_width,
+    	petal_length,
+    	petal_width  
+        FROM CREATE_CENTROID(kn)
+ 		LOOP
+        	dis_point_c1 :=  SQRT((POWER((REG.sepal_length - IRIS_NORMALIZADO.sepal_length),2) + 
+					POWER((REG.sepal_width - IRIS_NORMALIZADO.sepal_width),2) +
+					POWER((REG.petal_length - IRIS_NORMALIZADO.petal_length),2) +
+					POWER((REG.petal_width - IRIS_NORMALIZADO.petal_width),2)));
+ 			
+        	RETURN NEXT;
+ 		END LOOP;
+	RETURN QUERY SELECT * FROM DIS;
+END; $$
+LANGUAGE PLPGSQL;
+
+SELECT CALC_DISTANCIAS()
 --CREATE TABLE IRIS_TESTE(
 --	cod SERIAL,
  --   sepal_length REAL,
