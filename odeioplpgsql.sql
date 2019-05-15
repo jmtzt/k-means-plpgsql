@@ -145,7 +145,7 @@ SELECT NORMALIZE_FN();
 SELECT * FROM IRIS_NORMALIZADO;
 
 CREATE TABLE CENTROID(
-	cl_number serial,
+	cl_number integer,
 	sepal_length REAL,
     sepal_width REAL,
     petal_length REAL,
@@ -155,7 +155,7 @@ CREATE TABLE CENTROID(
 CREATE OR REPLACE FUNCTION CENTROID_FN(kn integer) RETURNS VOID AS $$
 	BEGIN
 		FOR i in 1 .. kn LOOP
-			INSERT INTO CENTROID (sepal_length, sepal_width, petal_length, petal_width) SELECT random(), random(), random(), random();
+			INSERT INTO CENTROID (cl_number, sepal_length, sepal_width, petal_length, petal_width) SELECT i, random(), random(), random(), random();
 		END LOOP;
 	END;
 $$ LANGUAGE PLPGSQL;
@@ -221,7 +221,6 @@ CREATE OR REPLACE FUNCTION INSERE_REGIAO_FN() RETURNS VOID AS $$
 	BEGIN
 		FOR i in 1 .. 150 LOOP
 			INSERT INTO CLUSTERS SELECT DISTINCT ON (dist) cl_number, sepal_length, sepal_width, petal_length, petal_width, dist FROM DISTANCIAS WHERE dist = (SELECT min(dist) FROM DISTANCIAS WHERE cod = i);
-			RAISE NOTICE 'i: %', i;
 		END LOOP;
 	END;
 $$ LANGUAGE PLPGSQL;
@@ -231,3 +230,41 @@ DROP TABLE CLUSTERS;
 select insere_regiao_fn();
 
 select * from clusters;
+
+-- CALCULA NOVOS CENTROS
+SELECT cl_number, AVG(sepal_length), AVG(sepal_width), AVG(petal_length), AVG(petal_width) FROM CLUSTERS GROUP BY cl_number;
+
+SELECT * FROM CENTROID;
+
+CREATE OR REPLACE FUNCTION KMEANS_FN(kn integer, iter integer) RETURNS VOID AS $$
+	DECLARE
+		new_centroid RECORD;
+	BEGIN
+		FOR i in 1 .. kn LOOP
+			INSERT INTO CENTROID (cl_number, sepal_length, sepal_width, petal_length, petal_width) SELECT i, random(), random(), random(), random();
+		END LOOP;
+		FOR i in 1 .. iter LOOP
+			INSERT INTO DISTANCIAS SELECT I.COD, CE.CL_NUMBER, I.sepal_length, I.sepal_width, I.petal_length, I.petal_width, DISTANCE_FN(I.sepal_length, CE.sepal_length, I.sepal_width, CE.sepal_width, I.petal_length, CE.petal_length, I.petal_width, CE.petal_width)
+										FROM IRIS_NORMALIZADO AS I, CENTROID AS CE;
+			FOR i in 1 .. 150 LOOP
+				INSERT INTO CLUSTERS SELECT DISTINCT ON (dist) cl_number, sepal_length, sepal_width, petal_length, petal_width, dist FROM DISTANCIAS WHERE dist = (SELECT min(dist) FROM DISTANCIAS WHERE cod = i);
+			END LOOP;
+		
+			SELECT cl_number, AVG(sepal_length) as avg_sl, AVG(sepal_width) as avg_sw, AVG(petal_length) as avg_pl, AVG(petal_width) as avg_pw INTO new_centroid FROM CLUSTERS GROUP BY cl_number ORDER BY cl_number ASC;	
+-- 		EXIT WHEN (ABS(new_centroid.avg_sl - CENTROID.sepal_length) < 0.01) AND (ABS(new_centroid.avg_sw - CENTROID.sepal_width) < 0.01) AND
+-- 			(ABS(new_centroid.avg_pl - CENTROID.petal_length) < 0.01) AND (ABS(new_centroid.avg_pw - CENTROID.petal_width) < 0.01);	
+		
+			
+			UPDATE CENTROID SET sepal_length = new_centroid.avg_sl, sepal_width = new_centroid.avg_sw, petal_length = new_centroid.avg_pl, petal_width = new_centroid.avg_pw WHERE centroid.cl_number = new_centroid.cl_number;
+			
+		END LOOP;
+	END;
+$$ LANGUAGE PLPGSQL;
+
+SELECT KMEANS_FN(3,1);
+
+SELECT * FROM CENTROID;
+SELECT * FROM DISTANCIAS;
+SELECT cl_number, AVG(sepal_length), AVG(sepal_width), AVG(petal_length), AVG(petal_width) FROM CLUSTERS GROUP BY cl_number;
+
+
