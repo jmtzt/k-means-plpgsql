@@ -206,10 +206,6 @@ $$ LANGUAGE PLPGSQL;
 
 SELECT CALC_DIST();
 
-SELECT cod, cl_number, min(dist) FROM DISTANCIAS group by cod, cl_number order by cod asc;
-
-SELECT cod, cl_number, MIN(dist_sl) as min_sl, MIN(dist_sw) as min_sw, MIN(dist_pl) as min_pl, MIN(dist_pw) as min_pw FROM DISTANCIAS GROUP BY cod, cl_number ORDER BY cod ASC;
-
 select cod, cl_number, min(dist) from distancias group by cod, cl_number order by cod, cl_number asc;
 
 CREATE TABLE CLUSTERS(
@@ -217,13 +213,15 @@ CREATE TABLE CLUSTERS(
 	sepal_length REAL,
 	sepal_width REAL, 
 	petal_length REAL,
-	petal_width REAL
+	petal_width REAL,
+	dist REAL
 );
 
-CREATE FUNCTION INSERE_REGIAO_FN() RETURNS VOID AS $$
+CREATE OR REPLACE FUNCTION INSERE_REGIAO_FN() RETURNS VOID AS $$
 	BEGIN
 		FOR i in 1 .. 150 LOOP
-			INSERT INTO CLUSTERS SELECT cl_number, sepal_length, sepal_width, petal_length, petal_width FROM DISTANCIAS WHERE dist = (SELECT min(dist) FROM DISTANCIAS WHERE cod = i);
+			INSERT INTO CLUSTERS SELECT DISTINCT ON (dist) cl_number, sepal_length, sepal_width, petal_length, petal_width, dist FROM DISTANCIAS WHERE dist = (SELECT min(dist) FROM DISTANCIAS WHERE cod = i);
+			RAISE NOTICE 'i: %', i;
 		END LOOP;
 	END;
 $$ LANGUAGE PLPGSQL;
@@ -233,5 +231,3 @@ DROP TABLE CLUSTERS;
 select insere_regiao_fn();
 
 select * from clusters;
-
-SELECT cod, FROM DISTANCIAS;
