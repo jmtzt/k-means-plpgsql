@@ -254,7 +254,7 @@ CREATE OR REPLACE FUNCTION KMEANS_FN(kn integer, iter integer) RETURNS VOID AS $
 -- 		EXIT WHEN (ABS(new_centroid.avg_sl - CENTROID.sepal_length) < 0.01) AND (ABS(new_centroid.avg_sw - CENTROID.sepal_width) < 0.01) AND
 -- 			(ABS(new_centroid.avg_pl - CENTROID.petal_length) < 0.01) AND (ABS(new_centroid.avg_pw - CENTROID.petal_width) < 0.01);	
 		
-			
+			-- MEXER AQUI AI JA ERAS
 			UPDATE CENTROID SET sepal_length = new_centroid.avg_sl, sepal_width = new_centroid.avg_sw, petal_length = new_centroid.avg_pl, petal_width = new_centroid.avg_pw WHERE centroid.cl_number = new_centroid.cl_number;
 			
 		END LOOP;
