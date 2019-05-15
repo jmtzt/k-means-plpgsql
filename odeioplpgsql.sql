@@ -181,34 +181,57 @@ SELECT * FROM CENTROID;
 -- SELECT MIN_INDEX_ARRAY(ARRAY[6,4,3,7,2,1, 0.03], 7);
 
 
-CREATE OR REPLACE FUNCTION DISTANCE_FN(x REAL, y REAL) RETURNS REAL AS $$
+CREATE OR REPLACE FUNCTION DISTANCE_FN(sli REAL, slc REAL, swi REAL, swc REAL, plir REAL, plc REAL, pwir REAL, pwc REAL) RETURNS REAL AS $$
 	BEGIN
-		RETURN SQRT(POWER(x, 2) + POWER(y, 2));	
+		RETURN sqrt(power((slc - sli), 2) + power((swi - swc), 2) + power((plir - plc), 2) + power((pwir - pwc), 2));
 	END;
 $$ LANGUAGE PLPGSQL;
 
 CREATE TABLE DISTANCIAS(
 	cod integer,
 	cl_number integer,
-	dist_sl REAL,
-	dist_sw REAL, 
-	dist_pl REAL,
-	dist_pw REAL
+	sepal_length REAL,
+	sepal_width REAL, 
+	petal_length REAL,
+	petal_width REAL,
+	dist REAL
 );
 
 CREATE OR REPLACE FUNCTION CALC_DIST() RETURNS VOID AS $$
 	BEGIN
-		INSERT INTO DISTANCIAS SELECT I.COD, CE.CL_NUMBER, DISTANCE_FN(I.sepal_length, CE.sepal_length), DISTANCE_FN(I.sepal_width, CE.sepal_width),
-										DISTANCE_FN(I.petal_length, CE.petal_length), DISTANCE_FN(I.petal_width, CE.petal_width)
+		INSERT INTO DISTANCIAS SELECT I.COD, CE.CL_NUMBER, I.sepal_length, I.sepal_width, I.petal_length, I.petal_width, DISTANCE_FN(I.sepal_length, CE.sepal_length, I.sepal_width, CE.sepal_width, I.petal_length, CE.petal_length, I.petal_width, CE.petal_width)
 										FROM IRIS_NORMALIZADO AS I, CENTROID AS CE;
 	END;
 $$ LANGUAGE PLPGSQL;
 
 SELECT CALC_DIST();
 
-SELECT * FROM DISTANCIAS;
+SELECT cod, cl_number, min(dist) FROM DISTANCIAS group by cod, cl_number order by cod asc;
 
-SELECT cod, MIN(dist_sl) as min_sl, MIN(dist_sw) as min_sw, MIN(dist_pl) as min_pl, MIN(dist_pw) as min_pw FROM DISTANCIAS GROUP BY cod ORDER BY cod ASC;
+SELECT cod, cl_number, MIN(dist_sl) as min_sl, MIN(dist_sw) as min_sw, MIN(dist_pl) as min_pl, MIN(dist_pw) as min_pw FROM DISTANCIAS GROUP BY cod, cl_number ORDER BY cod ASC;
 
+select cod, cl_number, min(dist) from distancias group by cod, cl_number order by cod, cl_number asc;
 
+CREATE TABLE CLUSTERS(
+	cl_number integer,
+	sepal_length REAL,
+	sepal_width REAL, 
+	petal_length REAL,
+	petal_width REAL
+);
 
+CREATE FUNCTION INSERE_REGIAO_FN() RETURNS VOID AS $$
+	BEGIN
+		FOR i in 1 .. 150 LOOP
+			INSERT INTO CLUSTERS SELECT cl_number, sepal_length, sepal_width, petal_length, petal_width FROM DISTANCIAS WHERE dist = (SELECT min(dist) FROM DISTANCIAS WHERE cod = i);
+		END LOOP;
+	END;
+$$ LANGUAGE PLPGSQL;
+
+DROP TABLE CLUSTERS;
+
+select insere_regiao_fn();
+
+select * from clusters;
+
+SELECT cod, FROM DISTANCIAS;
