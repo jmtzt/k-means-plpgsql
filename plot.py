@@ -17,4 +17,4 @@ df.cl_number[df.cl_number == 3] = 'virginica'
 # print(df.head())
 plt.figure()
 sns.pairplot(df, hue = "cl_number")
-plt.savefig('irisPLPGSQL', bbox_inches = 'tight')
+plt.savefig('irisPLPGSQL.pdf', bbox_inches = 'tight')
