@@ -6,8 +6,8 @@ CREATE TABLE IRIS(
     species INTEGER
 );
 
--- Iris-setosa - 1
--- Iris-versicolor - 2
+-- Iris-versicolor - 1
+-- Iris-setosa - 2
 -- Iris-virginica - 3
 
 CREATE TABLE IRIS_NORMALIZADO(
