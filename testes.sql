@@ -1,3 +1,6 @@
+--Felipe Augusto Arruda 1948423
+--João Marcelo Tozato 1913310
+--Vinicius Ribeiro Furlan 1913409
 
 -- TESTANDO KMEANS_FN COM 3 CLUSTERS E 100 ITERACOES
 SELECT KMEANS_FN(3, 100);

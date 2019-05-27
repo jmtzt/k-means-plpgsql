@@ -1,3 +1,7 @@
+--Felipe Augusto Arruda 1948423
+--João Marcelo Tozato 1913310
+--Vinicius Ribeiro Furlan 1913409
+
 CREATE TABLE IRIS(
     sepal_length REAL,
     sepal_width REAL,
